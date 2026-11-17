@@ -55,85 +55,7 @@ const Agent = ({
   const [lastMessage, setLastMessage] = useState<string>("");
   const [duration, setDuration] = useState(0);
   const [micVolume, setMicVolume] = useState(0); // 0-100 mic level
-  const [micError, setMicError] = useState<string | null>(null);
-  const micAnalyserRef = useRef<AnalyserNode | null>(null);
-  const micStreamRef = useRef<MediaStream | null>(null);
-  const micRafRef = useRef<number | null>(null);
-
-  // Live mic volume monitor: starts when call is active, stops when it ends
-  useEffect(() => {
-    if (callStatus !== CallStatus.ACTIVE) {
-      if (micRafRef.current) cancelAnimationFrame(micRafRef.current);
-      if (micStreamRef.current)
-        micStreamRef.current.getTracks().forEach((t) => t.stop());
-      micStreamRef.current = null;
-      micAnalyserRef.current = null;
-      setMicVolume(0);
-      setMicError(null);
-      return;
-    }
-
-    let active = true;
-    let ctx: AudioContext | null = null;
-
-    navigator.mediaDevices
-      .getUserMedia({ audio: true, video: false })
-      .then(async (stream) => {
-        if (!active) {
-          stream.getTracks().forEach((t) => t.stop());
-          return;
-        }
-        micStreamRef.current = stream;
-
-        const track = stream.getAudioTracks()[0];
-        console.log(
-          "Mic:",
-          track?.label,
-          "| muted:",
-          track?.muted,
-          "| state:",
-          track?.readyState
-        );
-
-        ctx = new AudioContext();
-        await ctx.resume();
-        console.log("AudioContext state:", ctx.state);
-
-        if (!active) return;
-
-        const source = ctx.createMediaStreamSource(stream);
-        const analyser = ctx.createAnalyser();
-        analyser.fftSize = 512;
-        source.connect(analyser);
-        micAnalyserRef.current = analyser;
-
-        const data = new Uint8Array(analyser.fftSize);
-        const tick = () => {
-          if (!active) return;
-          analyser.getByteTimeDomainData(data);
-          let sum = 0;
-          for (let i = 0; i < data.length; i++) {
-            const n = (data[i] - 128) / 128;
-            sum += n * n;
-          }
-          const rms = Math.sqrt(sum / data.length);
-          setMicVolume(Math.min(100, Math.round(rms * 400)));
-          micRafRef.current = requestAnimationFrame(tick);
-        };
-        tick();
-      })
-      .catch((err) => {
-        setMicError("Mic access failed: " + err.message);
-      });
-
-    return () => {
-      active = false;
-      if (micRafRef.current) cancelAnimationFrame(micRafRef.current);
-      if (micStreamRef.current)
-        micStreamRef.current.getTracks().forEach((t) => t.stop());
-      if (ctx && ctx.state !== "closed") ctx.close();
-    };
-  }, [callStatus]);
+  const [isMuted, setIsMuted] = useState(false);
 
   // Call duration timer
   useEffect(() => {
@@ -161,10 +83,26 @@ const Agent = ({
     const onCallStart = () => {
       setCallStatus(CallStatus.ACTIVE);
       setDuration(0);
+      setIsMuted(false);
+      setMicVolume(0);
+      try {
+        vapi.setMuted(false);
+        vapi.startLocalAudioLevelObserver(100).catch(() => {});
+      } catch {
+        // observer will start automatically if already active
+      }
     };
 
     const onCallEnd = () => {
       setCallStatus(CallStatus.FINISHED);
+      setMicVolume(0);
+      setIsMuted(false);
+    };
+
+    const onLocalVolumeLevel = (volume: number) => {
+      // volume is between 0 and 1
+      const normalized = Math.min(100, Math.round(volume * 100));
+      setMicVolume(normalized);
     };
 
     const onMessage = (message: Message) => {
@@ -192,6 +130,7 @@ const Agent = ({
 
     vapi.on("call-start", onCallStart);
     vapi.on("call-end", onCallEnd);
+    vapi.on("local-volume-level", onLocalVolumeLevel);
     vapi.on("message", onMessage);
     vapi.on("speech-start", onSpeechStart);
     vapi.on("speech-end", onSpeechEnd);
@@ -200,6 +139,7 @@ const Agent = ({
     return () => {
       vapi.off("call-start", onCallStart);
       vapi.off("call-end", onCallEnd);
+      vapi.off("local-volume-level", onLocalVolumeLevel);
       vapi.off("message", onMessage);
       vapi.off("speech-start", onSpeechStart);
       vapi.off("speech-end", onSpeechEnd);
@@ -258,6 +198,8 @@ const Agent = ({
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((t) => t.stop());
+      // Small pause to allow hardware audio device to release cleanly
+      await new Promise((resolve) => setTimeout(resolve, 150));
     } catch {
       toast.error(
         "Microphone access denied. Please allow mic in browser settings and try again."
@@ -318,7 +260,22 @@ const Agent = ({
   // Handle disconnect
   const handleDisconnect = () => {
     setCallStatus(CallStatus.FINISHED);
+    setMicVolume(0);
+    setIsMuted(false);
     vapi.stop();
+  };
+
+  // Toggle mic mute
+  const toggleMute = () => {
+    if (callStatus !== CallStatus.ACTIVE) return;
+    const next = !isMuted;
+    try {
+      vapi.setMuted(next);
+      setIsMuted(next);
+      toast.info(next ? "Microphone muted" : "Microphone active");
+    } catch (e) {
+      console.error("Failed to toggle mute:", e);
+    }
   };
 
   // Typo and display title normalization
@@ -612,17 +569,23 @@ const Agent = ({
 
             {/* Live Mic Volume Meter */}
             {callStatus === CallStatus.ACTIVE ? (
-              <div className="flex flex-col items-center gap-1.5 w-full max-w-[160px]">
-                {micError ? (
-                  <div className="flex items-center gap-1.5 text-xs text-red-400">
+              <div className="flex flex-col items-center gap-1.5 w-full max-w-[170px]">
+                {isMuted ? (
+                  <div className="flex items-center gap-1.5 text-xs text-amber-400 font-medium">
                     <MicOff className="size-3.5" aria-hidden="true" />
-                    <span>Mic Error!</span>
+                    <span>Microphone Muted</span>
                   </div>
                 ) : (
                   <>
-                    <div className="flex items-center gap-1.5 text-xs text-emerald-400">
+                    <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
                       <Mic className="size-3.5" aria-hidden="true" />
-                      <span>Mic Level: {micVolume}%</span>
+                      <span>
+                        {micVolume > 5
+                          ? `Speaking (${micVolume}%)`
+                          : isSpeaking
+                          ? "Interviewer Speaking"
+                          : "Listening for your voice..."}
+                      </span>
                     </div>
                     <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
                       <div
@@ -631,17 +594,12 @@ const Agent = ({
                           micVolume > 60
                             ? "bg-emerald-400"
                             : micVolume > 20
-                            ? "bg-yellow-400"
-                            : "bg-red-400"
+                            ? "bg-teal-400"
+                            : "bg-indigo-400"
                         )}
-                        style={{ width: `${micVolume}%` }}
+                        style={{ width: `${Math.max(8, micVolume)}%` }}
                       />
                     </div>
-                    {micVolume < 5 && (
-                      <p className="text-[10px] text-red-400 font-medium">
-                        ⚠️ Mic picking up nothing, check your device!
-                      </p>
-                    )}
                   </>
                 )}
               </div>
@@ -707,15 +665,46 @@ const Agent = ({
 
       {/* Floating Bottom Control Bar */}
       <div className="sticky bottom-4 z-30 mx-auto flex items-center justify-between gap-3 sm:gap-6 px-4 sm:px-8 py-3 rounded-full bg-[#0F0F1A]/95 backdrop-blur-2xl border border-white/[0.12] shadow-[0_16px_48px_rgba(0,0,0,0.8),0_0_30px_rgba(99,102,241,0.25)] max-w-[calc(100vw-32px)] sm:w-fit">
-        {/* Mic Indicator */}
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-300">
-          <div className="flex items-center justify-center size-8 rounded-full bg-white/5 border border-white/10 shrink-0">
-            <Mic className="size-4 text-emerald-400" aria-hidden="true" />
+        {/* Mic Indicator / Mute Toggle Button */}
+        <button
+          type="button"
+          onClick={toggleMute}
+          disabled={callStatus !== CallStatus.ACTIVE}
+          className={cn(
+            "flex items-center gap-2 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-full p-1 -m-1",
+            callStatus === CallStatus.ACTIVE ? "cursor-pointer" : "cursor-default opacity-80",
+            isMuted ? "text-amber-300" : "text-slate-300"
+          )}
+          title={
+            callStatus !== CallStatus.ACTIVE
+              ? "Microphone ready"
+              : isMuted
+              ? "Click to unmute microphone"
+              : "Click to mute microphone"
+          }
+        >
+          <div
+            className={cn(
+              "flex items-center justify-center size-8 rounded-full border transition-all shrink-0",
+              isMuted
+                ? "bg-amber-500/20 border-amber-500/40 text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.3)]"
+                : "bg-white/5 border-white/10 text-emerald-400"
+            )}
+          >
+            {isMuted ? (
+              <MicOff className="size-4 text-amber-400" aria-hidden="true" />
+            ) : (
+              <Mic className="size-4 text-emerald-400" aria-hidden="true" />
+            )}
           </div>
           <span className="hidden sm:inline">
-            {callStatus === CallStatus.ACTIVE ? "Mic Live" : "Mic Ready"}
+            {callStatus !== CallStatus.ACTIVE
+              ? "Mic Ready"
+              : isMuted
+              ? "Mic Muted"
+              : "Mic Live"}
           </span>
-        </div>
+        </button>
 
         {/* Big Action Call / End Button */}
         <div>
