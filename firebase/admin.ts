@@ -1,19 +1,8 @@
-import { createRequire } from "node:module";
+import { initializeApp, getApps, cert } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
 
-type BufferModule = typeof import("node:buffer") & {
-  SlowBuffer?: typeof import("node:buffer").Buffer;
-};
-
-async function initFirebaseAdmin() {
-  const nodeBuffer = createRequire(import.meta.url)("node:buffer") as BufferModule;
-  nodeBuffer.SlowBuffer ??= nodeBuffer.Buffer;
-
-  const [{ initializeApp, getApps, cert }, { getAuth }, { getFirestore }] =
-    await Promise.all([
-      import("firebase-admin/app"),
-      import("firebase-admin/auth"),
-      import("firebase-admin/firestore"),
-    ]);
+function initFirebaseAdmin() {
   const apps = getApps();
 
   if (!apps.length) {
@@ -42,6 +31,6 @@ async function initFirebaseAdmin() {
   };
 }
 
-export async function getFirebaseAdmin() {
+export function getFirebaseAdmin() {
   return initFirebaseAdmin();
 }
