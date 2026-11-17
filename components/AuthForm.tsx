@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { z } from "zod";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -216,14 +215,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
         <div className="relative z-10 flex flex-col gap-3">
           <Link href="/" className="flex items-center gap-2.5 w-fit group">
             <div className="size-9 rounded-xl bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] flex items-center justify-center shadow-[0_0_16px_rgba(99,102,241,0.4)] group-hover:scale-105 transition-transform">
-              <Image
-                src="/logo.svg"
-                alt=""
-                width={20}
-                height={16}
-                className="brightness-200"
-                aria-hidden="true"
-              />
+              <Bot className="size-5 text-white" aria-hidden="true" />
             </div>
             <span className="text-xl font-bold text-white tracking-tight">
               Vaani
@@ -371,14 +363,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
             aria-label="VaaniAI Home"
           >
             <div className="size-8 rounded-xl bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] flex items-center justify-center">
-              <Image
-                src="/logo.svg"
-                alt=""
-                width={18}
-                height={14}
-                className="brightness-200"
-                aria-hidden="true"
-              />
+              <Bot className="size-4 text-white" aria-hidden="true" />
             </div>
             <span className="text-base font-bold text-white">
               Vaani

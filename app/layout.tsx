@@ -13,6 +13,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "VaaniAI — AI Interview Practice",
   description: "An AI-powered voice interview platform for real-time mock interviews with smart feedback",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

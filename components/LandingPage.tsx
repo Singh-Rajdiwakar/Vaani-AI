@@ -280,7 +280,7 @@ export default function LandingPage() {
           {/* Brand */}
           <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
             <div className="size-9 rounded-xl bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] flex items-center justify-center shadow-[0_0_16px_rgba(99,102,241,0.4)] group-hover:scale-105 transition-transform">
-              <Image src="/logo-icon.svg" alt="" width={22} height={22} className="brightness-110" aria-hidden="true" unoptimized />
+              <Bot className="size-5 text-white" aria-hidden="true" />
             </div>
             <span className="text-lg font-bold text-white">
               Vaani<span className="bg-gradient-to-r from-[#A5B4FC] to-[#C4B5FD] bg-clip-text text-transparent">AI</span>
@@ -954,7 +954,7 @@ export default function LandingPage() {
             {/* Brand */}
             <Link href="/" className="flex items-center gap-2 group">
               <div className="size-7 rounded-lg bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] flex items-center justify-center group-hover:scale-105 transition-transform">
-                <Image src="/logo-icon.svg" alt="" width={14} height={12} className="brightness-200" aria-hidden="true" />
+                <Bot className="size-4 text-white" aria-hidden="true" />
               </div>
               <span className="text-sm font-bold text-slate-300 group-hover:text-white transition-colors">
                 Vaani<span className="bg-gradient-to-r from-[#A5B4FC] to-[#C4B5FD] bg-clip-text text-transparent">AI</span>

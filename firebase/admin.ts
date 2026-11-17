@@ -1,10 +1,29 @@
 import type { Auth } from "firebase-admin/auth";
 import type { Firestore } from "firebase-admin/firestore";
+import { createRequire } from "node:module";
+
+function polyfillSlowBuffer() {
+  try {
+    const req = createRequire(import.meta.url);
+    const buf = req("node:buffer");
+    if (buf && !buf.SlowBuffer) {
+      buf.SlowBuffer = buf.Buffer;
+    }
+  } catch {
+    //
+  }
+}
+
+// Polyfill immediately on module import
+polyfillSlowBuffer();
 
 let cachedAuth: Auth | null = null;
 let cachedDb: Firestore | null = null;
 
 export async function getFirebaseAdmin() {
+  // Ensure polyfill is in place before dynamic imports
+  polyfillSlowBuffer();
+
   if (cachedAuth && cachedDb) {
     return { auth: cachedAuth, db: cachedDb };
   }
