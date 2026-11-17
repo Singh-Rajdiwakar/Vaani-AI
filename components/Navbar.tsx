@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -12,6 +11,7 @@ import {
   PlusCircle,
   Loader2,
   CheckCircle2,
+  Bot,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -118,15 +118,7 @@ const Navbar = ({ user, rightSlot }: NavbarProps) => {
           aria-label="VaaniAI - Go to Dashboard"
         >
           <div className="relative flex items-center justify-center size-9 rounded-xl bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] shadow-[0_0_16px_rgba(99,102,241,0.4)] transition-transform duration-300 group-hover:scale-105">
-            <Image
-              src="/logo-icon.svg"
-              alt=""
-              width={22}
-              height={22}
-              className="object-contain"
-              aria-hidden="true"
-              unoptimized
-            />
+            <Bot className="size-5 text-white" aria-hidden="true" />
           </div>
 
           <div className="flex flex-col">
