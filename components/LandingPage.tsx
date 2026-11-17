@@ -225,6 +225,7 @@ export default function LandingPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [speakingAI, setSpeakingAI] = useState(true);
+  const [activeLine, setActiveLine] = useState(0);
 
   /* Navbar scroll shadow */
   useEffect(() => {
