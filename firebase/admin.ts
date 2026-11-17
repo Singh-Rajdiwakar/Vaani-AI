@@ -17,6 +17,28 @@ function polyfillSlowBuffer() {
 // Polyfill immediately on module import
 polyfillSlowBuffer();
 
+function formatPrivateKey(key: string | undefined): string | undefined {
+  if (!key) return undefined;
+  let cleaned = key.trim();
+
+  // Strip all leading and trailing quotes (single, double, escaped)
+  while (
+    (cleaned.startsWith('"') && cleaned.endsWith('"')) ||
+    (cleaned.startsWith("'") && cleaned.endsWith("'")) ||
+    (cleaned.startsWith('\\"') && cleaned.endsWith('\\"'))
+  ) {
+    if (cleaned.startsWith('\\"')) {
+      cleaned = cleaned.slice(2, -2).trim();
+    } else {
+      cleaned = cleaned.slice(1, -1).trim();
+    }
+  }
+
+  // Convert literal \n or \\n to actual newlines
+  cleaned = cleaned.replace(/\\n/g, "\n").trim();
+  return cleaned;
+}
+
 let cachedAuth: Auth | null = null;
 let cachedDb: Firestore | null = null;
 
@@ -35,7 +57,7 @@ export async function getFirebaseAdmin() {
   if (!getApps().length) {
     const projectId = process.env.FIREBASE_PROJECT_ID;
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+    const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
 
     if (!projectId || !clientEmail || !privateKey) {
       throw new Error(
