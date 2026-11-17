@@ -4,6 +4,8 @@ import { z } from "zod";
 
 import { getFirebaseAdmin } from "@/firebase/admin";
 
+export const dynamic = "force-dynamic";
+
 const appointmentSchema = z.object({
   name: z.string().nullable(),
   birthDate: z.string().nullable(),

@@ -4,6 +4,8 @@ import { google } from "@ai-sdk/google";
 import { getFirebaseAdmin } from "@/firebase/admin";
 import { getRandomInterviewCover } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   const { type, role, level, techstack, amount, userid } = await request.json();
   console.log("generate: start", { type, role, level, techstack, amount, userid });
