@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" role="img">
+  <defs>
+    <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+  <!-- Background rounded square -->
+  <rect width="120" height="120" rx="30" fill="url(#lg)"/>
+  <!-- Speech bubble body -->
+  <rect x="22" y="30" width="76" height="54" rx="22" fill="#fff"/>
+  <!-- Speech bubble tail -->
+  <path d="M38 80 L32 102 L60 82 Z" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Sound wave bars -->
+  <rect x="32" y="49" width="8" height="16" rx="4" fill="#5B4BEA"/>
+  <rect x="44" y="42" width="8" height="30" rx="4" fill="#5B4BEA"/>
+  <rect x="56" y="35" width="8" height="44" rx="4" fill="#5B4BEA"/>
+  <rect x="68" y="42" width="8" height="30" rx="4" fill="#5B4BEA"/>
+  <rect x="80" y="49" width="8" height="16" rx="4" fill="#5B4BEA"/>
+  <!-- Sparkle -->
+  <path d="M100 8 Q100 18 110 18 Q100 18 100 28 Q100 18 90 18 Q100 18 100 8Z" fill="#FFC53D"/>
+</svg>
